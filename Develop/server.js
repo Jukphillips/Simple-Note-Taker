@@ -3,6 +3,8 @@ const util = require('util')
 const fs = require('fs')
 const path = require('path')
 
+const uuid = require('./helpers/uuid')
+
 const PORT = process.env.PORT || 3001;
 
 const app = express();
@@ -13,8 +15,6 @@ app.use(express.static(__dirname + '/public'))
 app.get('/', (req, res) => {
     res.sendFile(__dirname + "/public/index.html")
 })
-
-
 
 app.get('/notes', (req, res) => {
     res.sendFile(__dirname + "/public/notes.html")
@@ -28,7 +28,7 @@ app.get('/api/notes', (req, res) => {
 const readFromFile = util.promisify(fs.readFile);
 
 const writeToFile = (destination, content) =>
-  fs.writeFile(destination, JSON.stringify(content, null, 4), (err) =>
+  fs.writeFile("./db/db.json", JSON.stringify(content, null, 4), (err) =>
     err ? console.error(err) : console.info(`\nData written to ${destination}`)
   );
 
@@ -43,6 +43,28 @@ const readAndAppend = (content, file) => {
     }
   });
 };
+
+app.post('/api/notes', (req, res) => {
+    const {title, text} = req.body
+    if(title && text) {
+        const newNote = {
+            title,
+            text,
+            id: uuid(),
+        }
+        readAndAppend(newNote, './db/db.json');
+        const response = {
+            status: 'sucess',
+            body: newNote,
+        }
+
+        res.json(response)
+    } else {
+        res.json('Error in posting note!')
+    }
+
+})
+
 
 
 
